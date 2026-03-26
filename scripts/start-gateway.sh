@@ -17,7 +17,7 @@ if [ -f "$GATEWAY_PID" ]; then
     echo "✅ Gateway já está rodando (PID $PID)"
     return
   else
-    echo "⚠️ PID antigo encontrado, limpando..."
+    echo "PID antigo encontrado, limpando..."
     rm -f "$GATEWAY_PID"
   fi
 fi
@@ -34,8 +34,8 @@ echo $PID > "$GATEWAY_PID"
 sleep 2
 
 if ps -p $PID > /dev/null; then
-  echo "✅ Gateway iniciado (PID $PID)"
+  echo "Gateway iniciado (PID $PID)"
 else
-  echo "❌ Falha ao iniciar gateway"
+  echo "Falha ao iniciar gateway"
   exit 1
 fi

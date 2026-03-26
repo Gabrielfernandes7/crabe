@@ -2,29 +2,32 @@
 
 set -euo pipefail
 
+# Base path (caso rode via symlink)
+SCRIPT_PATH="$(readlink -f "$0")"
+BASE_DIR="$(dirname "$SCRIPT_PATH")/.."
+
+# Importar cores
+source "$BASE_DIR/cli/colors.sh"
+
 # CONFIG
 INSTALL_DIR="$HOME/.openclaw"
-REPO_URL="https://github.com/clawbot/openclaw.git"
+REPO_URL="https://github.com/openclaw/openclaw.git"
 
-# Cores
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+CONFIG_DIR="$HOME/.openclaw/config"
+WORKSPACE_DIR="$HOME/.openclaw/workspace"
 
-echo -e "${CYAN}🦞 Configurando OpenClaw...${NC}"
+log_highlight "🦞 Configurando OpenClaw..."
 
 # 1. Verificar dependências
 
-function check_command() {
-  if ! command -v "$1" &> /dev/null; then
-    echo -e "${RED}❌ Dependência não encontrada: $1${NC}"
+check_command() {
+  if ! command -v "$1" &>/dev/null; then
+    log_error "Dependência não encontrada: $1"
     return 1
   fi
 }
 
-echo -e "${CYAN}🔍 Verificando dependências...${NC}"
+echo "Verificando dependências..."
 
 MISSING=0
 
@@ -33,82 +36,125 @@ check_command docker || MISSING=1
 check_command curl || MISSING=1
 
 if [ "$MISSING" -eq 1 ]; then
-  echo -e "${YELLOW}⚠️ Instale as dependências antes de continuar.${NC}"
+  log_warn "Instale as dependências antes de continuar."
   exit 1
 fi
 
-echo -e "${GREEN}✅ Dependências OK${NC}"
+log_info "Dependências OK"
 
-# 2. Verificar instalação existente
+# 2. Detectar Docker Compose
+
+if docker compose version &>/dev/null; then
+  DOCKER_COMPOSE="docker compose"
+elif command -v docker-compose &>/dev/null; then
+  DOCKER_COMPOSE="docker-compose"
+else
+  log_error "Docker Compose não encontrado"
+  exit 1
+fi
+
+log_info "Docker Compose detectado"
+
+# 3. Clonar ou atualizar
 
 if [ -d "$INSTALL_DIR" ]; then
-  echo -e "${YELLOW}⚠️ OpenClaw já existe em $INSTALL_DIR${NC}"
+  log_warn "⚠️ OpenClaw já existe em $INSTALL_DIR"
 
   cd "$INSTALL_DIR"
 
-  # Verifica se é um repositório git válido
   if [ -d ".git" ]; then
-    echo -e "${CYAN}🔄 Atualizando repositório...${NC}"
+    log_highlight "Atualizando repositório..."
 
-    if git pull; then
-      echo -e "${GREEN}✅ OpenClaw atualizado${NC}"
-    else
-      echo -e "${RED}❌ Falha ao atualizar (problema de rede?)${NC}"
+    git pull || {
+      log_error "Falha ao atualizar repositório"
       exit 1
-    fi
+    }
+
+    log_info "OpenClaw atualizado"
   else
-    echo -e "${RED}❌ Diretório existe mas não é um repositório git válido${NC}"
-    echo -e "${YELLOW}Sugestão: remover manualmente:${NC} rm -rf $INSTALL_DIR"
+    log_error "Diretório não é um repositório git válido"
+    log_warn "Sugestão: rm -rf $INSTALL_DIR"
     exit 1
   fi
-
 else
-  # 3. Clonar repositório
+  log_highlight "Baixando OpenClaw..."
 
-  echo -e "${CYAN}📥 Baixando OpenClaw...${NC}"
-
-  if git clone "$REPO_URL" "$INSTALL_DIR"; then
-    echo -e "${GREEN}✅ OpenClaw baixado com sucesso${NC}"
-  else
-    echo -e "${RED}❌ Falha ao clonar repositório${NC}"
-    echo -e "${YELLOW}Verifique conexão com internet ou acesso ao GitHub${NC}"
+  git clone "$REPO_URL" "$INSTALL_DIR" || {
+    log_error "Falha ao clonar repositório"
     exit 1
-  fi
-fi
+  }
 
-# 4. Verificar arquivos críticos
+  log_info "OpenClaw baixado com sucesso"
+fi
 
 cd "$INSTALL_DIR"
 
+# 4. Validar estrutura
+
 if [ ! -f "docker-compose.yml" ]; then
-  echo -e "${RED}❌ docker-compose.yml não encontrado no OpenClaw${NC}"
+  log_error "docker-compose.yml não encontrado"
   exit 1
 fi
 
-echo -e "${GREEN}✅ Estrutura do OpenClaw OK${NC}"
+log_info "Estrutura OK"
 
-# 5. Subir serviços (opcional)
+# 5. Criar diretórios obrigatórios (CORREÇÃO PRINCIPAL)
 
-echo -e "${CYAN}🚀 Deseja iniciar o OpenClaw agora? (s/n)${NC}"
+log_highlight "📁 Preparando diretórios..."
+
+mkdir -p "$CONFIG_DIR"
+mkdir -p "$WORKSPACE_DIR"
+
+log_info "Diretórios criados"
+
+# 6. Criar/ajustar .env (CORREÇÃO PRINCIPAL)
+
+log_highlight "⚙️ Configurando ambiente..."
+
+if [ -f ".env.example" ] && [ ! -f ".env" ]; then
+  cp .env.example .env
+  log_info ".env criado a partir do .env.example"
+fi
+
+# Garantir variáveis obrigatórias
+touch .env
+
+# Remove entradas antigas (evita duplicação)
+sed -i '/OPENCLAW_CONFIG_DIR/d' .env
+sed -i '/OPENCLAW_WORKSPACE_DIR/d' .env
+
+# Adiciona corretamente
+cat <<EOF >> .env
+OPENCLAW_CONFIG_DIR=$CONFIG_DIR
+OPENCLAW_WORKSPACE_DIR=$WORKSPACE_DIR
+EOF
+
+log_info "Variáveis OPENCLAW configuradas"
+
+# 7. Perguntar para iniciar
+
+log_highlight "🚀 Deseja iniciar o OpenClaw agora? (s/n)"
 read -r START_NOW
 
 if [[ "$START_NOW" =~ ^[Ss]$ ]]; then
-  echo -e "${CYAN}🐳 Subindo OpenClaw...${NC}"
+  log_highlight "🐳 Subindo containers..."
 
-  if docker compose up -d; then
-    echo -e "${GREEN}✅ OpenClaw iniciado${NC}"
+  if $DOCKER_COMPOSE up -d --build; then
+    log_info "OpenClaw iniciado"
   else
-    echo -e "${RED}❌ Falha ao subir containers${NC}"
+    log_error "Falha ao subir containers"
+    log_warn "📜 Logs para debug:"
+    $DOCKER_COMPOSE logs
     exit 1
   fi
 else
-  echo -e "${YELLOW}⏭️ Inicialização ignorada${NC}"
+  log_warn "⏭️ Inicialização ignorada"
 fi
 
 # FINAL
 
 echo ""
-echo -e "${GREEN}🎉 OpenClaw pronto!${NC}"
-echo -e "📂 Local: $INSTALL_DIR"
-echo -e "👉 Para iniciar manualmente:"
-echo -e "   cd $INSTALL_DIR && docker compose up -d"
+log_highlight "🎉 OpenClaw pronto!"
+log_info "📂 Local: $INSTALL_DIR"
+log_info "👉 Para iniciar manualmente:"
+echo "cd $INSTALL_DIR && $DOCKER_COMPOSE up -d"

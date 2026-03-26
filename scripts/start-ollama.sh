@@ -13,6 +13,27 @@ NC='\033[0m'
 
 log() { echo -e "$1"; }
 
+# PARSE DE ARGUMENTOS
+MODELS=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --model)
+      if [[ -n "${2:-}" ]]; then
+        MODELS+=("$2")
+        shift 2
+      else
+        log "${RED}Erro: --model requer um valor${NC}"
+        exit 1
+      fi
+      ;;
+    *)
+      log "${RED}Argumento desconhecido: $1${NC}"
+      exit 1
+      ;;
+  esac
+done
+
 # INIT
 log "${CYAN}🦞 Iniciando Ollama + Open-WebUI...${NC}"
 
@@ -45,38 +66,42 @@ until curl -s http://127.0.0.1:11434/api/tags >/dev/null; do
 done
 log "${GREEN}✅ Ollama pronto na porta 11434${NC}"
 
-# MENU MULTI-SELEÇÃO
-echo
-log "${PURPLE}Selecione modelos de código (multi-select):${NC}"
-log "1) ${GREEN}qwen2.5-coder:7b${NC}   → Melhor geral"
-log "2) ${GREEN}deepseek-coder:6.7b${NC} → Ótimo raciocínio"
-log "3) ${GREEN}codellama:7b${NC}       → Estável"
-log "4) ${YELLOW}llama3.2:3b${NC}       → Leve"
-log "5) ${YELLOW}llama3.2:1b${NC}       → Muito leve"
-log "6) ${CYAN}Pular${NC}"
+# MODO INTERATIVO SE NÃO PASSAR --model
+if [ ${#MODELS[@]} -eq 0 ]; then
+    echo
+    log "${PURPLE}Selecione modelos de código (multi-select):${NC}"
+    log "1) ${GREEN}qwen2.5-coder:7b${NC}"
+    log "2) ${GREEN}deepseek-coder:6.7b${NC}"
+    log "3) ${GREEN}codellama:7b${NC}"
+    log "4) ${YELLOW}llama3.2:3b${NC}"
+    log "5) ${YELLOW}llama3.2:1b${NC}"
+    log "6) ${CYAN}Pular${NC}"
 
-echo
-read -p "Digite os números separados por espaço: " -ra choices
+    echo
+    read -p "Digite os números separados por espaço: " -ra choices
 
-MODELS=()
-
-for choice in "${choices[@]}"; do
-  case $choice in
-    1) MODELS+=("qwen2.5-coder:7b") ;;
-    2) MODELS+=("deepseek-coder:6.7b") ;;
-    3) MODELS+=("codellama:7b") ;;
-    4) MODELS+=("llama3.2:3b") ;;
-    5) MODELS+=("llama3.2:1b") ;;
-    6) ;;
-    *) log "${RED}Opção inválida: $choice${NC}" ;;
-  esac
-done
+    for choice in "${choices[@]}"; do
+      case $choice in
+        1) MODELS+=("qwen2.5-coder:7b") ;;
+        2) MODELS+=("deepseek-coder:6.7b") ;;
+        3) MODELS+=("codellama:7b") ;;
+        4) MODELS+=("llama3.2:3b") ;;
+        5) MODELS+=("llama3.2:1b") ;;
+        6) ;;
+        *) log "${RED}Opção inválida: $choice${NC}" ;;
+      esac
+    done
+fi
 
 # DOWNLOAD MODELOS
 if [ ${#MODELS[@]} -gt 0 ]; then
     for model in "${MODELS[@]}"; do
-        log "${YELLOW}⬇ Baixando $model...${NC}"
-        docker exec ollama-cpu ollama pull "$model"
+        if docker exec ollama-cpu ollama list | grep -q "$model"; then
+            log "${GREEN}Modelo já existe: $model${NC}"
+        else
+            log "${YELLOW}⬇ Baixando $model...${NC}"
+            docker exec ollama-cpu ollama pull "$model"
+        fi
     done
 else
     log "${YELLOW}Nenhum modelo selecionado${NC}"
@@ -95,7 +120,7 @@ if [ ${#MODELS[@]} -gt 0 ]; then
     JSON_MODELS=$(printf '"%s",' "${MODELS[@]}" | sed 's/,$//')
     echo "{ \"models\": [$JSON_MODELS] }" > "$CRABE_DIR/config.json"
 
-    log "${GREEN}💾 Modelos salvos no Crabe${NC}"
+    log "${GREEN} Modelos salvos no Crabe${NC}"
 fi
 
 # FINAL

@@ -1,37 +1,37 @@
 #!/bin/bash
 
 function crabe_doctor() {
-  echo "🩺 Diagnóstico do sistema"
+  echo "Diagnóstico do sistema"
 
   echo ""
-  echo "🔹 Docker:"
+  echo "Docker:"
   if command -v docker &> /dev/null; then
-    echo "✅ Instalado"
+    echo "Instalado"
   else
-    echo "❌ Não encontrado"
+    echo "Não encontrado"
   fi
 
   echo ""
-  echo "🔹 Docker Compose:"
+  echo "Docker Compose:"
   if docker compose version &> /dev/null; then
-    echo "✅ OK"
+    echo "OK"
   else
-    echo "❌ Problema no compose"
+    echo "Problema no compose"
   fi
 
   echo ""
-  echo "🔹 Ollama container:"
+  echo "Ollama container:"
   if docker ps | grep -q "ollama"; then
-    echo "✅ Rodando"
+    echo "Rodando"
   else
-    echo "❌ Não está rodando"
+    echo "Não está rodando"
   fi
 
   echo ""
-  echo "🔹 Porta 11434 (Ollama):"
+  echo "Porta 11434 (Ollama):"
   if lsof -i:11434 &> /dev/null; then
-    echo "✅ Ativa"
+    echo "Ativa"
   else
-    echo "❌ Inativa"
+    echo "Inativa"
   fi
 }

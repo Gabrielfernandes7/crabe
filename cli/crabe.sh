@@ -1,56 +1,59 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
 # Resolve caminho real mesmo via symlink
 SCRIPT_PATH="$(realpath "$0" 2>/dev/null || greadlink -f "$0")"
-BASE_DIR="$(dirname "$SCRIPT_PATH")/.."
+BASE_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 
 CRABE_DIR="$HOME/.crabe"
 PROJECT_DIR="$(pwd)"
 
-# Paths dos módulos de comandos
+# Paths
 CORE="$BASE_DIR/core/context-resolver.sh"
 START="$BASE_DIR/scripts/start.sh"
 DOCTOR="$BASE_DIR/scripts/doctor.sh"
 SETUP_OPENCLAW="$BASE_DIR/scripts/setup-openclaw.sh"
 START_OLLAMA="$BASE_DIR/scripts/start-ollama.sh"
+UNINSTALL="$BASE_DIR/scripts/uninstall.sh"
 COLORS="$BASE_DIR/cli/colors.sh"
 
 CONFIG_FILE="$CRABE_DIR/config.json"
 
-# Importar cores
-source "$COLORS"
+# Importar cores com fallback
+if [ -f "$COLORS" ]; then
+  source "$COLORS"
+else
+  log_info() { echo "[INFO] $1"; }
+  log_warn() { echo "[WARN] $1"; }
+  log_error() { echo "[ERROR] $1"; }
+  log_highlight() { echo "==> $1"; }
+fi
 
-# Validações básicas
-function check_dependencies() {
-  if ! command -v jq &> /dev/null; then
-    log_error "jq não está instalado"
-    log_warn "Instale com: sudo apt install jq"
-    exit 1
-  fi
+# -------- VALIDAÇÕES --------
+check_dependencies() {
+  command -v jq >/dev/null || { log_error "jq não está instalado"; exit 1; }
 
-  if [ ! -f "$CORE" ]; then
-    log_error "core não encontrado em: $CORE"
-    exit 1
-  fi
+  [ -f "$CORE" ] || { log_error "core não encontrado: $CORE"; exit 1; }
+  [ -f "$START" ] || { log_error "start não encontrado: $START"; exit 1; }
+  [ -f "$DOCTOR" ] || { log_error "doctor não encontrado: $DOCTOR"; exit 1; }
 }
 
-# Configuração
-function load_config() {
-  LOCAL_CONFIG="$PROJECT_DIR/model.crabe.json"
-  GLOBAL_CONFIG="$CRABE_DIR/config.json"
+# -------- CONFIG --------
+load_config() {
+  local LOCAL_CONFIG="$PROJECT_DIR/model.crabe.json"
+  local GLOBAL_CONFIG="$CONFIG_FILE"
 
   MODEL=""
   SOURCE=""
 
   if [ -f "$LOCAL_CONFIG" ]; then
-    MODEL=$(jq -r '.model // empty' "$LOCAL_CONFIG")
+    MODEL="$(jq -r '.model // empty' "$LOCAL_CONFIG")"
     SOURCE="local"
   fi
 
   if [ -z "$MODEL" ] && [ -f "$GLOBAL_CONFIG" ]; then
-    MODEL=$(jq -r '.model // empty' "$GLOBAL_CONFIG")
+    MODEL="$(jq -r '.model // empty' "$GLOBAL_CONFIG")"
     SOURCE="global"
   fi
 
@@ -60,35 +63,37 @@ function load_config() {
   fi
 }
 
-# Importar módulos
-check_dependencies
+save_model() {
+  mkdir -p "$CRABE_DIR"
+  jq -n --arg model "$1" '{model: $model}' > "$CONFIG_FILE"
+}
 
+# -------- IMPORTS --------
+check_dependencies
 source "$CORE"
 source "$START"
 source "$DOCTOR"
 
-# Entrada
-COMMAND=$1
+# -------- COMMAND DISPATCH --------
+COMMAND="${1:-}"
 
-if [ -z "$COMMAND" ]; then
-  log_warn "Uso: crabe {init|status|doctor|model|version|install}"
+[ -n "$COMMAND" ] || {
+  log_warn "Uso: crabe {init|status|doctor|model|version|install|uninstall}"
   exit 1
-fi
+}
 
 load_config
 
-case $COMMAND in
+case "$COMMAND" in
   init)
     log_highlight "Crabe iniciando..."
 
     crabe_start
     crabe_set_context "$PROJECT_DIR"
 
-    echo ""
+    echo
     log_info "Modelo: $MODEL ($SOURCE)"
     log_info "Projeto: $PROJECT_DIR"
-    log_info "Gateway: ativo"
-    echo ""
     log_info "Crabe pronto"
     ;;
 
@@ -101,21 +106,18 @@ case $COMMAND in
     ;;
 
   model)
-    NEW_MODEL=$2
-
-    if [ -z "$NEW_MODEL" ]; then
+    if [ -z "${2:-}" ]; then
       log_info "Modelo atual: $MODEL ($SOURCE)"
     else
-      mkdir -p "$CRABE_DIR"
-      echo "{ \"model\": \"$NEW_MODEL\" }" > "$CONFIG_FILE"
-      log_info "Modelo alterado para: $NEW_MODEL"
+      save_model "$2"
+      log_info "Modelo alterado para: $2"
     fi
     ;;
 
   install)
-    TARGET=$2
+    TARGET="${2:-}"
 
-    case $TARGET in
+    case "$TARGET" in
       openclaw)
         log_highlight "Instalando OpenClaw..."
         bash "$SETUP_OPENCLAW"
@@ -123,11 +125,10 @@ case $COMMAND in
 
       ollama)
         shift 2
-
         MODEL_ARG=""
 
         while [[ $# -gt 0 ]]; do
-          case $1 in
+          case "$1" in
             --model)
               MODEL_ARG="$2"
               shift 2
@@ -155,16 +156,17 @@ case $COMMAND in
     esac
     ;;
 
+  uninstall)
+    bash "$UNINSTALL" "${2:-}"
+    ;;
+
   version)
-    log_highlight "Crabe v0.1.0"
+    log_highlight "Crabe version 26.1"
     echo "Base dir: $BASE_DIR"
     ;;
 
-  uninstall)
-    bash "$BASE_DIR/scripts/uninstall.sh" "$2"
-    ;;
-
   *)
-    log_warn "Uso: crabe {init|status|doctor|model|version|install}"
+    log_warn "Uso: crabe {init|status|doctor|model|version|install|uninstall}"
+    exit 1
     ;;
 esac
