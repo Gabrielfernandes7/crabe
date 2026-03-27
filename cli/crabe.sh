@@ -114,46 +114,36 @@ case "$COMMAND" in
     fi
     ;;
 
-  install)
-    TARGET="${2:-}"
+    install)
+      shift
+      case "${1:-}" in
+        openclaw)
+          log_highlight "Instalando OpenClaw..."
+          bash "$SETUP_OPENCLAW"
+          ;;
 
-    case "$TARGET" in
-      openclaw)
-        log_highlight "Instalando OpenClaw..."
-        bash "$SETUP_OPENCLAW"
-        ;;
+        ollama|--model)
+          if [ "${1}" = "--model" ]; then
+            MODEL_NAME="${2:-}"
+          else
+            MODEL_NAME="${2:-}"
+          fi
 
-      ollama)
-        shift 2
-        MODEL_ARG=""
+          if [ -z "$MODEL_NAME" ]; then
+            log_error "Faltou o nome do modelo."
+            log_info "Uso: crabe install --model <nome>"
+            exit 1
+          fi
 
-        while [[ $# -gt 0 ]]; do
-          case "$1" in
-            --model)
-              MODEL_ARG="$2"
-              shift 2
-              ;;
-            *)
-              log_error "Parâmetro inválido: $1"
-              exit 1
-              ;;
-          esac
-        done
+          bash "$BASE_DIR/scripts/install-model.sh" "$MODEL_NAME"
+          ;;
 
-        log_highlight "Configurando Ollama..."
-
-        if [ -n "$MODEL_ARG" ]; then
-          bash "$START_OLLAMA" --model "$MODEL_ARG"
-        else
-          bash "$START_OLLAMA"
-        fi
-        ;;
-
-      *)
-        log_warn "Uso: crabe install {openclaw|ollama}"
-        exit 1
-        ;;
-    esac
+        *)
+          log_warn "Uso: crabe install {openclaw | --model <nome_do_modelo>}"
+          log_info "Exemplo: crabe install --model qwen2.5-coder:7b"
+          exit 1
+          ;;
+      esac
     ;;
 
   uninstall)
