@@ -40,14 +40,14 @@ services:
   portainer:
     image: portainer/portainer-ce:latest
     container_name: portainer
+    command: -H unix:///var/run/docker.sock --admin-password-file /tmp/portainer_password.txt
     ports:
-      - "9000:9000"   # ← HTTP simples (mais fácil no dev)
-      - "8000:8000"   # opcional
+      - "9000:9000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
+      - ${PWD}/portainer_password.txt:/tmp/portainer_password.txt
     restart: unless-stopped
-    # command: ["--admin-password", "123456"]   # descomente só na PRIMEIRA vez
 
 volumes:
   ollama_data:
