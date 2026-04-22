@@ -22,20 +22,35 @@ services:
       - OLLAMA_KV_CACHE_TYPE=q4_0
       - OLLAMA_CONTEXT_LENGTH=2048
 
-  open-webui:
-    image: ghcr.io/open-webui/open-webui:main
-    container_name: open-webui
-    ports:
-      - "3000:8080"
-    volumes:
-      - open-webui_data:/app/backend/data
-    environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - WEBUI_AUTH=False
-      - ENABLE_PERSISTENT_CONFIG=False
+  # open-webui:
+  #   image: ghcr.io/open-webui/open-webui:main
+  #   container_name: open-webui
+  #   ports:
+  #     - "3000:8080"
+  #   volumes:
+  #     - open-webui_data:/app/backend/data
+  #   environment:
+  #     - OLLAMA_BASE_URL=http://ollama:11434
+  #     - WEBUI_AUTH=False
+  #     - ENABLE_PERSISTENT_CONFIG=False
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - ollama
+
+  openclaw:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: openclaw
     restart: unless-stopped
-    depends_on:
-      - ollama
+    ports:
+      - "18789:18789"
+    volumes:
+      - ./config:/root/.openclaw
+      - ./data:/root/.local/share/openclaw
+    environment:
+      - NODE_ENV=production
+    # Isso permite que o container acesse o Ollama no seu host Linux
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   portainer:
     image: portainer/portainer-ce:latest
