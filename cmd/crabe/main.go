@@ -11,6 +11,8 @@ import (
 	"github.com/Gabrielfernandes7/crabe/internal/setup"
 	"github.com/Gabrielfernandes7/crabe/internal/start"
 	"github.com/Gabrielfernandes7/crabe/internal/ui"
+	"github.com/Gabrielfernandes7/crabe/internal/inspect"
+
 	"github.com/spf13/cobra"
 )
 
@@ -26,6 +28,7 @@ var rootCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(doctor.NewDoctorCmd())
 	rootCmd.AddCommand(initcmd.NewInitCmd())
+	rootCmd.AddCommand(inspect.NewInspectCmd())
 	rootCmd.AddCommand(install.NewInstallCmd())
 	rootCmd.AddCommand(setup.NewSetupCmd())
 	rootCmd.AddCommand(uninstall.NewUninstallCmd())
