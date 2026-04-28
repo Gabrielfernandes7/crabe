@@ -15,43 +15,43 @@
   <img src="https://img.shields.io/badge/100%25%20Local-blue" alt="100% Local">
 </p>
 
-**Crabe** é uma **CLI moderna em Go** que simplifica drasticamente o uso de agentes de IA locais.
+**Crabe** is a **modern CLI written in Go** that drastically simplifies the use of local AI agents.
 
-### O problema que resolvemos
-Configurar um agente de IA poderoso (como o **OpenClaw**) com **Ollama** e **Docker** para trabalhar no contexto do seu projeto atual costuma ser complicado: você precisa gerenciar Docker Compose, baixar modelos, configurar volumes, portas, permissões e ferramentas manualmente. Isso gera muita fricção toda vez que você troca de projeto.
+### The Problem it Solves
+Setting up a powerful AI agent (like **OpenClaw**) with **Ollama** and **Docker** to work within the context of your current project is usually complicated. You have to manually manage Docker Compose, download models, configure volumes, ports, permissions, and tools. This creates significant friction every time you switch projects.
 
-### A solução: Crabe
-Entre em **qualquer pasta** do seu computador e execute um único comando:
+### The Solution: Crabe
+Navigate to **any folder** on your computer and run a single command:
 
 ```bash
 crabe init
 ```
 
-Pronto. O Crabe cuida de toda a orquestração e você ganha um **agente de IA inteligente rodando 100% localmente**, entendendo perfeitamente o contexto do projeto atual.
+That's it. Crabe handles all the orchestration, providing you with a **smart AI agent running 100% locally**, with a full understanding of your current project's context.
 
-**Crabe não substitui o OpenClaw** — ele usa o OpenClaw como motor principal, mas adiciona a camada de **experiência do desenvolvedor (DX)** que estava faltando: instalação simples, diagnóstico automático, inicialização por projeto e interface bonita no terminal.
+**Crabe does not replace OpenClaw** — it uses OpenClaw as its core engine while adding the missing **Developer Experience (DX)** layer: simple installation, automatic diagnostics, per-project initialization, and a beautiful terminal interface.
 
 ---
 
 ### Demo
 
 ![Crabe Demo](https://i.imgur.com/XXXXXXX.gif)  
-*(Substitua pelo GIF real mostrando `crabe doctor`, `crabe init` e uma conversa com o agente)*
+*(Replace with an actual GIF showing `crabe doctor`, `crabe init`, and a conversation with the agent)*
 
 ---
 
-## Requisitos
+## Requirements
 
-- **Docker** instalado e rodando
-- **Ollama** instalado (o Crabe faz o pull dos modelos recomendados)
-- Pelo menos 8 GB de RAM livre (16 GB+ recomendado para modelos maiores)
-- Linux / macOS (suporte a Windows em desenvolvimento)
+- **Docker** installed and running
+- **Ollama** installed (Crabe automatically pulls recommended models)
+- At least 8 GB of free RAM (16 GB+ recommended for larger models)
+- Linux / macOS (Windows support currently in development)
 
 ---
 
-## Como instalar (uma única vez)
+## How to Install (One-time setup)
 
-### Recomendado (com Makefile)
+### Recommended (via Makefile)
 
 ```bash
 git clone https://github.com/Gabrielfernandes7/crabe.git
@@ -59,9 +59,9 @@ cd crabe
 make install
 ```
 
-Isso compila o binário em Go e coloca o comando `crabe` no seu PATH.
+This compiles the Go binary and adds the `crabe` command to your PATH.
 
-### Alternativa manual
+### Manual Alternative
 
 ```bash
 cd crabe
@@ -72,98 +72,96 @@ chmod +x /usr/local/bin/crabe
 
 ---
 
-## Como usar (Fluxo diário)
+## Usage (Daily Workflow)
 
 ```bash
-# 1. Entre na pasta do seu projeto
-cd ~/projetos/meu-app-nextjs
+# 1. Enter your project folder
+cd ~/projects/my-nextjs-app
 
-# 2. Inicialize o agente
+# 2. Initialize the agent
 crabe init
 ```
 
-Depois disso, o agente já estará pronto. Você pode conversar com ele em linguagem natural dentro daquela pasta (ele terá acesso aos arquivos, git, terminal, etc.).
+Once initialized, the agent is ready. You can interact with it using natural language within that folder (it will have access to files, git, terminal, etc.).
 
-Para forçar uma reinicialização:
+To force a re-initialization:
 ```bash
 crabe init --force
 ```
 
 ---
 
-## Comandos principais
+## Core Commands
 
-| Comando                  | Descrição                                              |
-|--------------------------|--------------------------------------------------------|
-| `crabe init`             | Inicializa o agente no projeto atual                   |
-| `crabe init --force`     | Força a reinicialização (útil para mudanças)           |
-| `crabe doctor`           | Diagnóstico completo do ambiente (Docker, Ollama, etc.)|
-| `crabe status`           | Mostra serviços rodando e modelo em uso                |
-| `crabe version`          | Mostra a versão instalada                              |
-| `crabe --help`           | Lista todos os comandos e opções                       |
-
----
-
-## Modelos recomendados (via Ollama)
-
-- **`qwen2.5-coder:7b`** → **Melhor equilíbrio** performance × consumo (recomendado para a maioria)
-- **`qwen2.5-coder:14b`** → Mais inteligente e capaz (exige mais RAM)
-
-O Crabe faz o download automático do modelo escolhido durante o `init`.
+| Command                  | Description                                              |
+|--------------------------|----------------------------------------------------------|
+| `crabe init`             | Initializes the agent in the current project             |
+| `crabe init --force`     | Forces re-initialization (useful for changes)            |
+| `crabe doctor`           | Full environment diagnostic (Docker, Ollama, etc.)       |
+| `crabe status`           | Shows running services and the model in use              |
+| `crabe version`          | Displays the installed version                           |
+| `crabe --help`           | Lists all commands and options                           |
 
 ---
 
-## Desenvolvimento
+## Recommended Models (via Ollama)
+
+- **`qwen2.5-coder:7b`** → **Best balance** between performance and resource consumption (recommended for most).
+- **`qwen2.5-coder:14b`** → Smarter and more capable (requires more RAM).
+
+Crabe automatically handles the download of the chosen model during `init`.
+
+---
+
+## Development
 
 ```bash
-make build      # Compila o binário
-make install    # Compila e instala
-make doctor     # Executa crabe doctor
-make init       # Executa crabe init no diretório atual
-make clean      # Remove binários gerados
+make build      # Compiles the binary
+make install    # Compiles and installs
+make doctor     # Runs crabe doctor
+make init       # Runs crabe init in the current directory
+make clean      # Removes generated binaries
 ```
 
 ---
 
-## Tecnologias
+## Technologies
 
-- **Go** + **Cobra** (CLI robusta)
-- **Lipgloss** (interface moderna e colorida no terminal)
-- **OpenClaw** + **Ollama** + **Docker** (tudo rodando localmente)
-
----
-
-## Dicas e Troubleshooting
-
-- Sempre rode `make install` após alterar o código.
-- Comando não encontrado? Execute `make remove-old && make install`.
-- Problemas com Docker? Verifique se seu usuário está no grupo `docker` (`sudo usermod -aG docker $USER`).
-- Rode `crabe doctor` sempre que tiver algum erro.
+- **Go** + **Cobra** (Robust CLI framework)
+- **Lipgloss** (Modern and colorful terminal UI)
+- **OpenClaw** + **Ollama** + **Docker** (Everything running locally)
 
 ---
 
-**Pronto para começar?**
+## Tips & Troubleshooting
+
+- Always run `make install` after modifying the code.
+- Command not found? Run `make remove-old && make install`.
+- Docker issues? Ensure your user is in the `docker` group (`sudo usermod -aG docker $USER`).
+- Run `crabe doctor` whenever you encounter an error.
+
+---
+
+**Ready to start?**
 
 ```bash
-cd seu-projeto
+cd your-project
 crabe init
 ```
 
-Agora você tem um agente de IA local trabalhando **exatamente** onde você precisa.
+Now you have a local AI agent working **exactly** where you need it.
 
 ---
 
-## Bibliotecas principais
+## Main Libraries
 
 - [spf13/cobra](https://github.com/spf13/cobra)
 - [charmbracelet/lipgloss](https://github.com/charmbracelet/lipgloss)
 
 ---
 
+**Contributions are welcome!** Feel free to open an issue or submit a Pull Request.
 
-**Contribuições são bem-vindas!**  
-Abra uma issue ou envie um Pull Request.
+## License
 
-## Licença
-
-Este projeto está licenciado sob a [Licença MIT](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
