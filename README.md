@@ -142,6 +142,14 @@ make clean      # Remove binários gerados
 
 ---
 
+## Para excutar o comando `crabe`
+
+```shell
+make build
+
+make install
+```
+
 **Pronto para começar?**
 
 ```bash
