@@ -18,7 +18,7 @@
 **Crabe** é uma **CLI moderna em Go** que simplifica drasticamente o uso de agentes de IA locais.
 
 ### O problema que resolvemos
-Configurar um agente de IA poderoso (como o **OpenClaw**) com **Ollama** e **Docker** para trabalhar no contexto do seu projeto atual costuma ser complicado: você precisa gerenciar Docker Compose, baixar modelos, configurar volumes, portas, permissões e ferramentas manualmente. Isso gera muita fricção toda vez que você troca de projeto.
+Configurar um ambiente de IA local com **Ollama** e **Docker** para trabalhar no contexto do seu projeto atual costuma ser complicado: você precisa gerenciar Docker Compose, baixar modelos, configurar volumes, portas, permissões e ferramentas manualmente. Isso gera muita fricção toda vez que você troca de projeto.
 
 ### A solução: Crabe
 Entre em **qualquer pasta** do seu computador e execute um único comando:
@@ -29,7 +29,7 @@ crabe init
 
 Pronto. O Crabe cuida de toda a orquestração e você ganha um **agente de IA inteligente rodando 100% localmente**, entendendo perfeitamente o contexto do projeto atual.
 
-**Crabe não substitui o OpenClaw** — ele usa o OpenClaw como motor principal, mas adiciona a camada de **experiência do desenvolvedor (DX)** que estava faltando: instalação simples, diagnóstico automático, inicialização por projeto e interface bonita no terminal.
+O **Crabe** adiciona a camada de **experiência do desenvolvedor (DX)** que estava faltando: instalação simples, diagnóstico automático, inicialização por projeto e interface bonita no terminal.
 
 ---
 
@@ -129,7 +129,7 @@ make clean      # Remove binários gerados
 
 - **Go** + **Cobra** (CLI robusta)
 - **Lipgloss** (interface moderna e colorida no terminal)
-- **OpenClaw** + **Ollama** + **Docker** (tudo rodando localmente)
+- **Ollama** + **Docker** (tudo rodando localmente)
 
 ---
 
