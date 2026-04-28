@@ -21,7 +21,7 @@ func NewInitCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Inicializa o Crabe no projeto atual",
-		Long:  "Cria o contexto local (.crabe/) e prepara o ambiente com OpenClaw + Ollama automaticamente.",
+		Long:  "Cria o contexto local (.crabe/) e prepara o ambiente com Ollama automaticamente.",
 		Run: func(cmd *cobra.Command, args []string) {
 			RunInit(force)
 		},
@@ -56,12 +56,12 @@ func RunInit(force bool) {
 	// Por enquanto, chamamos o RunSetup diretamente se necessário
 	state := getSystemState() // função auxiliar que vamos definir
 
-	needsSetup := !state.OllamaRunning || !state.OpenClawInstalled
+	needsSetup := !state.OllamaRunning
 
 	if needsSetup {
 		ui.Warning("Ambiente incompleto detectado")
 		ui.Info("Executando setup automático...")
-		setup.RunSetup(false)   // Apenas 1 argumento (force)
+		setup.RunSetup(false) // Apenas 1 argumento (force)
 	} else {
 		ui.Success("Ambiente já pronto")
 	}
@@ -85,8 +85,7 @@ func getSystemState() setup.SystemState {
 	// Por enquanto chamamos diretamente o preflight interno via reflection ou duplicamos um pouco
 	// Versão simples: sempre assume que precisa de setup se o init for chamado (melhorar depois)
 	return setup.SystemState{
-		OpenClawInstalled: false,
-		OllamaRunning:     false,
+		OllamaRunning: false,
 	}
 }
 

@@ -12,14 +12,6 @@ func RunPreflight() SystemState {
 
 	state := SystemState{}
 
-	// OpenClaw
-	if _, err := exec.LookPath("openclaw"); err == nil {
-		ui.Success("OpenClaw encontrado")
-		state.OpenClawInstalled = true
-	} else {
-		ui.Warning("OpenClaw não instalado")
-	}
-
 	// Docker
 	if _, err := exec.LookPath("docker"); err == nil {
 		ui.Success("Docker instalado")

@@ -53,7 +53,7 @@ func RunInstall(model string) {
 	}
 
 	ui.Success(fmt.Sprintf("✅ Modelo %s instalado com sucesso!", model))
-	ui.Info("Agora você pode usar este modelo no Open WebUI ou no OpenClaw.")
+	ui.Info("Agora você pode usar este modelo no Open WebUI ou em qualquer cliente Ollama.")
 }
 
 func isOllamaRunning() bool {

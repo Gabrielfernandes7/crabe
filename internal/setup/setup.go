@@ -10,7 +10,7 @@ func NewSetupCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "setup",
-		Short: "Provisiona ambiente completo (OpenClaw + Ollama + Docker)",
+		Short: "Provisiona ambiente completo (Ollama + Docker)",
 		Run: func(cmd *cobra.Command, args []string) {
 			RunSetup(force)
 		},
@@ -39,17 +39,6 @@ func RunSetup(force bool) {
 	model, err := EnsureModel(state.Models)
 	if err != nil {
 		ui.Error("Erro ao baixar modelo")
-		return
-	}
-
-	// 🔥 NOVO FLUXO
-	if err := SetupOpenClawWithOllama(model); err != nil {
-		ui.Error("Erro ao iniciar OpenClaw via Ollama")
-		return
-	}
-
-	if err := SetupGateway(); err != nil {
-		ui.Error("Erro no gateway")
 		return
 	}
 

@@ -6,20 +6,20 @@ import (
 
 	"github.com/Gabrielfernandes7/crabe/internal/doctor"
 	"github.com/Gabrielfernandes7/crabe/internal/initcmd"
+	"github.com/Gabrielfernandes7/crabe/internal/inspect"
 	"github.com/Gabrielfernandes7/crabe/internal/install"
-	"github.com/Gabrielfernandes7/crabe/internal/uninstall"
 	"github.com/Gabrielfernandes7/crabe/internal/setup"
 	"github.com/Gabrielfernandes7/crabe/internal/start"
 	"github.com/Gabrielfernandes7/crabe/internal/ui"
-	"github.com/Gabrielfernandes7/crabe/internal/inspect"
+	"github.com/Gabrielfernandes7/crabe/internal/uninstall"
 
 	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "crabe",
-	Short: "🦀 Crabe CLI - Agente de IA local com OpenClaw",
-	Long:  `Ferramenta para facilitar o uso de OpenClaw + Ollama 100% local no contexto do seu projeto.`,
+	Short: "🦀 Crabe CLI - Ambiente de IA local com Ollama",
+	Long:  `Ferramenta para facilitar o uso de Ollama 100% local no contexto do seu projeto.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		ui.Init()
 	},
