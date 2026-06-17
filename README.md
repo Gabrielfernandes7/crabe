@@ -18,7 +18,7 @@
 **Crabe** é uma **CLI moderna em Go** que simplifica drasticamente o uso de agentes de IA locais.
 
 ### O problema que resolvemos
-Configurar um ambiente de IA local com **Ollama** e **Docker** para trabalhar no contexto do seu projeto atual costuma ser complicado: você precisa gerenciar Docker Compose, baixar modelos, configurar volumes, portas, permissões e ferramentas manualmente. Isso gera muita fricção toda vez que você troca de projeto.
+Configurar um ambiente de IA local com **Ollama** para trabalhar no contexto do seu projeto atual costuma ser complicado: você precisa configurar volumes, portas, permissões e ferramentas manualmente. Isso gera muita fricção toda vez que você troca de projeto.
 
 ### A solução: Crabe
 Entre em **qualquer pasta** do seu computador e execute um único comando:
@@ -35,15 +35,16 @@ O **Crabe** adiciona a camada de **experiência do desenvolvedor (DX)** que esta
 
 ### Demo
 
-![Crabe Demo](https://i.imgur.com/XXXXXXX.gif)  
+<!--![Crabe Demo](https://i.imgur.com/XXXXXXX.gif)-->
+
+![Crabe Demo](/docs/crabe-tui.png)  
 *(Substitua pelo GIF real mostrando `crabe doctor`, `crabe init` e uma conversa com o agente)*
 
 ---
 
 ## Requisitos
 
-- **Docker** instalado e rodando
-- **Ollama** instalado (o Crabe faz o pull dos modelos recomendados)
+- **Ollama** instalado
 - Pelo menos 8 GB de RAM livre (16 GB+ recomendado para modelos maiores)
 - Linux / macOS (suporte a Windows em desenvolvimento)
 
@@ -129,7 +130,7 @@ make clean      # Remove binários gerados
 
 - **Go** + **Cobra** (CLI robusta)
 - **Lipgloss** (interface moderna e colorida no terminal)
-- **Ollama** + **Docker** (tudo rodando localmente)
+- **Ollama** (tudo rodando localmente)
 
 ---
 
@@ -137,7 +138,6 @@ make clean      # Remove binários gerados
 
 - Sempre rode `make install` após alterar o código.
 - Comando não encontrado? Execute `make remove-old && make install`.
-- Problemas com Docker? Verifique se seu usuário está no grupo `docker` (`sudo usermod -aG docker $USER`).
 - Rode `crabe doctor` sempre que tiver algum erro.
 
 ---

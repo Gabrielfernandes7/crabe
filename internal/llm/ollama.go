@@ -2,9 +2,11 @@ package llm
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 type OllamaClient struct {
@@ -19,47 +21,100 @@ func NewOllamaClient(baseURL, model string) *OllamaClient {
 	}
 }
 
-type ChatMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+func (c *OllamaClient) Name() string {
+	return "ollama"
 }
 
-type ChatRequest struct {
+func (c *OllamaClient) Health(ctx context.Context) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", c.BaseURL+"/api/tags", nil)
+	if err != nil {
+		return err
+	}
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("ollama health check failed with status: %d", resp.StatusCode)
+	}
+	return nil
+}
+
+type chatRequest struct {
 	Model    string        `json:"model"`
 	Messages []ChatMessage `json:"messages"`
 	Stream   bool          `json:"stream"`
 }
 
-type ChatResponse struct {
+type chatResponse struct {
 	Message ChatMessage `json:"message"`
 }
 
-func (c *OllamaClient) Chat(messages []ChatMessage) (string, error) {
-	reqBody := ChatRequest{
+func (c *OllamaClient) Chat(ctx context.Context, req ChatRequest) (ChatResponse, error) {
+	reqBody := chatRequest{
 		Model:    c.Model,
-		Messages: messages,
+		Messages: req.Messages,
 		Stream:   false,
 	}
 
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
-		return "", err
+		return ChatResponse{}, err
 	}
 
-	resp, err := http.Post(c.BaseURL+"/api/chat", "application/json", bytes.NewBuffer(jsonData))
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", c.BaseURL+"/api/chat", bytes.NewBuffer(jsonData))
 	if err != nil {
-		return "", err
+		return ChatResponse{}, err
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 3 * time.Minute}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return ChatResponse{}, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("ollama error: %d", resp.StatusCode)
+		var buf bytes.Buffer
+		buf.ReadFrom(resp.Body)
+		return ChatResponse{}, fmt.Errorf("ollama error: %d - %s", resp.StatusCode, buf.String())
 	}
 
-	var chatResp ChatResponse
+	var chatResp chatResponse
 	if err := json.NewDecoder(resp.Body).Decode(&chatResp); err != nil {
-		return "", err
+		return ChatResponse{}, err
 	}
 
-	return chatResp.Message.Content, nil
+	return ChatResponse{Content: chatResp.Message.Content}, nil
+}
+
+// PullModel pulls a model from the Ollama server.
+func (c *OllamaClient) PullModel(ctx context.Context, model string) error {
+	payload := map[string]string{"name": model}
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", c.BaseURL+"/api/pull", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to pull model: %d", resp.StatusCode)
+	}
+
+	return nil
 }

@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"github.com/Gabrielfernandes7/crabe/internal/llm"
 	"github.com/Gabrielfernandes7/crabe/internal/tools"
 )
@@ -38,11 +39,11 @@ func (a *Agent) Process(input string) (string, error) {
 	// Simple reasoning loop (without tool-use for now, just direct chat)
 	// We'll add tool-use detection and execution next
 	
-	resp, err := a.client.Chat(a.history)
+	resp, err := a.client.Chat(context.Background(), llm.ChatRequest{Model: a.client.Model, Messages: a.history})
 	if err != nil {
 		return "", err
 	}
 
-	a.history = append(a.history, llm.ChatMessage{Role: "assistant", Content: resp})
-	return resp, nil
+	a.history = append(a.history, llm.ChatMessage{Role: "assistant", Content: resp.Content})
+	return resp.Content, nil
 }

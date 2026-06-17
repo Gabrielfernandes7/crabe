@@ -1,30 +1,44 @@
 package setup
 
 import (
-	"os"
-	"os/exec"
-	"strings"
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"time"
 
 	"github.com/Gabrielfernandes7/crabe/internal/ui"
 )
 
 const defaultModel = "qwen2.5:3b"
+const ollamaBaseURL = "http://localhost:11434"
+
+type modelList struct {
+	Models []struct {
+		Name string `json:"name"`
+	} `json:"models"`
+}
 
 func listModels() []string {
-	cmd := exec.Command("docker", "exec", "ollama", "ollama", "list")
-	out, err := cmd.Output()
+	resp, err := http.Get(ollamaBaseURL + "/api/tags")
 	if err != nil {
 		return nil
 	}
+	defer resp.Body.Close()
 
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	if resp.StatusCode != http.StatusOK {
+		return nil
+	}
+
+	var ml modelList
+	if err := json.NewDecoder(resp.Body).Decode(&ml); err != nil {
+		return nil
+	}
+
 	var models []string
-
-	for i := 1; i < len(lines); i++ {
-		fields := strings.Fields(lines[i])
-		if len(fields) > 0 {
-			models = append(models, fields[0])
-		}
+	for _, m := range ml.Models {
+		models = append(models, m.Name)
 	}
 
 	return models
@@ -38,12 +52,25 @@ func EnsureModel(models []string) (string, error) {
 	ui.Section("Modelo")
 	ui.Info("Baixando modelo padrão: %s", defaultModel)
 
-	cmd := exec.Command("docker", "exec", "ollama", "ollama", "pull", defaultModel)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	// Ollama pull API
+	payload := map[string]string{"name": defaultModel}
+	jsonData, _ := json.Marshal(payload)
 
-	if err := cmd.Run(); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
+	req, _ := http.NewRequestWithContext(ctx, "POST", ollamaBaseURL+"/api/pull", bytes.NewBuffer(jsonData))
+	req.Header.Set("Content-Type", "application/json")
+	
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
 		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to pull model: %d", resp.StatusCode)
 	}
 
 	return defaultModel, nil

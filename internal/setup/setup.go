@@ -10,7 +10,7 @@ func NewSetupCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "setup",
-		Short: "Provisiona ambiente completo (Ollama + Docker)",
+		Short: "Provisiona ambiente Ollama",
 		Run: func(cmd *cobra.Command, args []string) {
 			RunSetup(force)
 		},
@@ -26,13 +26,8 @@ func RunSetup(force bool) {
 
 	state := RunPreflight()
 
-	if !state.DockerRunning {
-		ui.Error("Docker não está rodando")
-		return
-	}
-
-	if err := EnsureDockerUp(); err != nil {
-		ui.Error("Erro ao subir containers")
+	if !state.OllamaRunning {
+		ui.Error("Ollama não está rodando")
 		return
 	}
 

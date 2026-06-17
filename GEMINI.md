@@ -3,22 +3,21 @@
 This document provides context and guidelines for developing and interacting with the Crabe project.
 
 ## Project Overview
-Crabe is a modern CLI tool written in Go that simplifies the orchestration of local AI agents. It automates the setup of **Ollama** and **Docker** environments, providing a seamless Developer Experience (DX) for running LLMs within specific project contexts.
+Crabe is a modern CLI tool written in Go that simplifies the orchestration of local AI agents. It provides a seamless Developer Experience (DX) for running LLMs, assuming Ollama is already installed and running locally.
 
 ### Main Technologies
 - **Go 1.26+**: Core programming language.
 - **Cobra**: CLI framework for command management.
 - **Lipgloss**: UI library for modern terminal styling.
-- **Docker & Docker Compose**: For containerized AI service orchestration.
 - **Ollama**: Local LLM runner.
 
 ### Architecture
 - `cmd/crabe/`: The main entry point and command registrations.
 - `internal/`: Core business logic partitioned by command:
-    - `doctor/`: Diagnostics for Docker, Ollama, and system ports.
+    - `doctor/`: Diagnostics for Ollama, and system ports.
     - `initcmd/`: Logic for project-level agent initialization.
     - `inspect/`: System resource analysis (CPU, GPU, RAM).
-    - `setup/`: Infrastructure setup (Docker Compose, Ollama configuration).
+    - `setup/`: Infrastructure setup (Ollama configuration).
     - `ui/`: Centralized styling and terminal output helpers.
 
 ## Building and Running
