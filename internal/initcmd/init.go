@@ -5,88 +5,68 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Gabrielfernandes7/crabe/internal/setup"
 	"github.com/Gabrielfernandes7/crabe/internal/ui"
 	"github.com/spf13/cobra"
 )
 
 const (
 	contextDir  = ".crabe"
-	contextFile = "context.md"
+	contextFile = "CRABE.md"
+	configFile  = "config.yaml"
 )
+
+var subDirs = []string{"skills", "outputs", "memory"}
 
 func NewInitCmd() *cobra.Command {
 	var force bool
 
 	cmd := &cobra.Command{
 		Use:   "init",
-		Short: "Inicializa o Crabe no projeto atual",
-		Long:  "Cria o contexto local (.crabe/) e prepara o ambiente com Ollama automaticamente.",
+		Short: "Inicializa o Crabe Business Agent no projeto atual",
+		Long:  "Cria a estrutura do Business Agent (.crabe/) e prepara o ambiente local.",
 		Run: func(cmd *cobra.Command, args []string) {
 			RunInit(force)
 		},
 	}
 
-	cmd.Flags().BoolVarP(&force, "force", "f", false, "Força reinicialização do contexto")
+	cmd.Flags().BoolVarP(&force, "force", "f", false, "Força reinicialização do workspace")
 
 	return cmd
 }
 
 func RunInit(force bool) {
-	ui.Title("🚀 Crabe Init")
+	ui.Title("🚀 Crabe Workspace Init")
 
 	// 1. Detectar se já existe contexto
 	if contextExists() && !force {
-		ui.Warning("Projeto já inicializado (.crabe encontrado)")
+		ui.Warning("Workspace já inicializado (.crabe encontrado)")
 		ui.Info("Use --force para recriar")
 		return
 	}
 
 	// 2. Criar estrutura local
-	ui.Section("Contexto do projeto")
-	if err := createContext(force); err != nil {
-		ui.Error(fmt.Sprintf("Erro ao criar contexto: %v", err))
+	ui.Section("Estrutura do Workspace")
+	if err := createStructure(force); err != nil {
+		ui.Error(fmt.Sprintf("Erro ao criar estrutura: %v", err))
 		return
 	}
 
-	// 3. Verificar ambiente (rápido)
+	// 3. Verificar ambiente
 	ui.Section("Ambiente")
-
-	// Usamos a função preflight interna (não exportada) através de uma função wrapper que vamos criar depois
-	// Por enquanto, chamamos o RunSetup diretamente se necessário
-	state := getSystemState() // função auxiliar que vamos definir
-
-	needsSetup := !state.OllamaRunning
-
-	if needsSetup {
-		ui.Warning("Ambiente incompleto detectado")
-		ui.Info("Executando setup automático...")
-		setup.RunSetup(false) // Apenas 1 argumento (force)
-	} else {
-		ui.Success("Ambiente já pronto")
-	}
+	// Por agora, apenas informa que o ambiente deve ser verificado com doctor
+	ui.Info("Verifique seu ambiente local com: crabe doctor")
+	ui.Success("Estrutura de pastas pronta")
 
 	// 4. Mensagem final
-	ui.Title("✅ Projeto pronto")
+	ui.Title("✅ Workspace Pronto")
 
-	ui.Success("Crabe inicializado com sucesso neste diretório!")
+	ui.Success("Crabe Business Agent inicializado com sucesso!")
 
 	fmt.Println()
 	ui.Info("Próximos passos:")
-	ui.Info("  crabe start      → subir serviços")
-	ui.Info("  crabe status     → verificar status")
-	ui.Info("  crabe doctor     → diagnóstico")
+	ui.Info("  crabe trust      → autorizar escrita no workspace")
+	ui.Info("  crabe            → iniciar agente interativo")
 	fmt.Println()
-	ui.Info("Web UI: http://localhost:3000")
-}
-
-// Função auxiliar para acessar o state (já que preflight é privada)
-func getSystemState() setup.SystemState {
-	// Por enquanto chamamos diretamente o preflight interno via reflection ou duplicamos um pouco
-	// Versão simples: sempre assume que precisa de setup se o init for chamado (melhorar depois)
-	return setup.SystemState{
-		OllamaRunning: false,
-	}
 }
 
 func contextExists() bool {
@@ -94,50 +74,68 @@ func contextExists() bool {
 	return err == nil
 }
 
-func createContext(force bool) error {
+func createStructure(force bool) error {
 	if force {
 		_ = os.RemoveAll(contextDir)
 	}
 
+	// Criar diretório principal
 	if err := os.MkdirAll(contextDir, 0755); err != nil {
 		return err
 	}
 
-	path := filepath.Join(contextDir, contextFile)
-
-	if _, err := os.Stat(path); err == nil && !force {
-		ui.Success("context.md já existe")
-		return nil
+	// Criar subdiretórios
+	for _, dir := range subDirs {
+		path := filepath.Join(contextDir, dir)
+		if err := os.MkdirAll(path, 0755); err != nil {
+			return err
+		}
+		ui.Success("Criado: %s/", path)
 	}
 
-	content := defaultContext()
-
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	// Criar CRABE.md
+	crabePath := filepath.Join(contextDir, contextFile)
+	if err := os.WriteFile(crabePath, []byte(defaultCRABE()), 0644); err != nil {
 		return err
 	}
+	ui.Success("Criado: %s", crabePath)
 
-	ui.Success(fmt.Sprintf("Criado: %s", path))
+	// Criar config.yaml
+	configPath := filepath.Join(contextDir, configFile)
+	if err := os.WriteFile(configPath, []byte(defaultConfig()), 0644); err != nil {
+		return err
+	}
+	ui.Success("Criado: %s", configPath)
+
 	return nil
 }
 
-func defaultContext() string {
-	return `# 🦀 Crabe Context
+func defaultCRABE() string {
+	return `# 🦀 Business Context: {{Project Name}}
 
-Descreva aqui o contexto do seu projeto para melhorar a qualidade das respostas da IA.
+Este arquivo define o contexto do negócio para o Crabe Agent.
 
-## Projeto
-- Nome: 
-- Descrição: 
+## Visão Geral
+- **Nome do Projeto:** 
+- **Setor:** 
+- **Público-Alvo:** 
 
-## Stack
-- Backend: 
-- Frontend: 
-- Infra: 
+## Objetivos de Negócio
+1. 
+2. 
 
-## Objetivo
-Descreva o que você quer construir ou melhorar.
+## Diferenciais
+- 
 
-## Observações
-Qualquer detalhe relevante para o assistente.
+## Desafios Atuais
+- 
+`
+}
+
+func defaultConfig() string {
+	return `model: qwen3:8b
+ollama_url: http://localhost:11434
+temperature: 0.7
+max_tokens: 4096
 `
 }

@@ -3,76 +3,95 @@ package uninstall
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"runtime"
 
 	"github.com/Gabrielfernandes7/crabe/internal/ui"
 	"github.com/spf13/cobra"
 )
 
 func NewUninstallCmd() *cobra.Command {
-	var all bool
 	var yes bool
 
 	cmd := &cobra.Command{
 		Use:   "uninstall",
-		Short: "Remove completamente Ollama, Docker e configurações do Crabe",
+		Short: "Remove completamente o Crabe do sistema (MacOS, Linux, Windows)",
 		Run: func(cmd *cobra.Command, args []string) {
-			runUninstall(all, yes)
+			runUninstall(yes)
 		},
 	}
 
-	cmd.Flags().BoolVarP(&all, "all", "a", false, "Remove também Ollama, volumes Docker e todos os dados")
-	cmd.Flags().BoolVarP(&yes, "yes", "y", false, "Não pede confirmação (modo não-interativo)")
+	cmd.Flags().BoolVarP(&yes, "yes", "y", false, "Confirmação automática")
 
 	return cmd
 }
 
-func runUninstall(all, yes bool) {
-	ui.Title("🗑️  Crabe Uninstall")
+func runUninstall(yes bool) {
+	ui.Title("🗑️  Crabe Global Uninstall")
 
 	if !yes {
-		ui.Warning("⚠️  Esta ação é irreversível!")
-		ui.Info("Vai limpar configurações locais do Crabe e, se --all, remover Ollama e volumes Docker.")
-		ui.Info("Execute com --yes para confirmar.")
+		ui.Warning("⚠️  Atenção: Esta ação removerá as configurações globais do Crabe.")
+		ui.Info("Isso inclui arquivos em ~/.crabe ou AppData/Roaming/crabe.")
+		fmt.Print("\nDeseja continuar? (s/N): ")
+		var confirm string
+		fmt.Scanln(&confirm)
+		if confirm != "s" && confirm != "S" {
+			ui.Info("Operação cancelada.")
+			return
+		}
+	}
+
+	ui.Section("Removendo arquivos de configuração")
+	cleanGlobalConfig()
+
+	ui.Section("Instruções de remoção do binário")
+	showBinaryInfo()
+
+	ui.Title("✅ Processo concluído")
+	ui.Success("Configurações globais removidas com sucesso.")
+}
+
+func cleanGlobalConfig() {
+	home, _ := os.UserHomeDir()
+	var configPath string
+
+	switch runtime.GOOS {
+	case "windows":
+		appData := os.Getenv("APPDATA")
+		if appData == "" {
+			appData = filepath.Join(home, "AppData", "Roaming")
+		}
+		configPath = filepath.Join(appData, "crabe")
+	default:
+		// MacOS e Linux
+		configPath = filepath.Join(home, ".crabe")
+	}
+
+	if _, err := os.Stat(configPath); err == nil {
+		if err := os.RemoveAll(configPath); err == nil {
+			ui.Success("Removido: %s", configPath)
+		} else {
+			ui.Error("Erro ao remover %s: %v", configPath, err)
+		}
+	} else {
+		ui.Info("Diretório de configuração não encontrado: %s", configPath)
+	}
+}
+
+func showBinaryInfo() {
+	exePath, err := os.Executable()
+	if err != nil {
+		ui.Warning("Não foi possível localizar o binário atual.")
 		return
 	}
 
-	// 1. Ollama + Docker (se --all)
-	if all {
-		ui.Section("Removendo Ollama + Docker")
-		removeOllama()
-	} else {
-		ui.Success("Ollama mantido (use --all para remover também)")
-	}
-
-	// 2. Limpeza final do Crabe
-	ui.Section("Limpando configurações do Crabe")
-	cleanCrabeDirectories()
-
-	ui.Title("✅ Desinstalação concluída!")
-	ui.Success("Limpeza do Crabe finalizada.")
-}
-
-func removeOllama() {
-	ui.Info("Parando e removendo Ollama...")
-	_ = exec.Command("docker", "compose", "down", "--volumes", "--remove-orphans").Run()
-	_ = exec.Command("docker", "rm", "-f", "ollama").Run()
-	_ = exec.Command("docker", "volume", "prune", "-f").Run()
-	ui.Success("Ollama removido")
-}
-
-func cleanCrabeDirectories() {
-	home, _ := os.UserHomeDir()
-	paths := []string{
-		filepath.Join(home, ".crabe"),
-	}
-
-	for _, p := range paths {
-		if err := os.RemoveAll(p); err == nil {
-			ui.Success(fmt.Sprintf("Removido: %s", p))
-		} else if !os.IsNotExist(err) {
-			ui.Warning(fmt.Sprintf("Não conseguiu remover: %s", p))
-		}
+	ui.Info("O binário atual está em: %s", exePath)
+	
+	switch runtime.GOOS {
+	case "windows":
+		ui.Info("Para remover completamente, apague o arquivo .exe acima.")
+	case "darwin", "linux":
+		ui.Info("Para remover o binário, você pode rodar:")
+		ui.Highlight("  sudo rm %s", exePath)
 	}
 }
