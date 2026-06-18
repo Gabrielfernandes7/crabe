@@ -3,6 +3,7 @@ package workspace
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/Gabrielfernandes7/crabe/internal/ui"
 	"github.com/spf13/cobra"
@@ -81,4 +82,18 @@ func IsTrusted() bool {
 
 func CanWrite() bool {
 	return GetTrustLevel() == WorkspaceWrite
+}
+
+func LoadConfig() (string, error) {
+	data, err := os.ReadFile(".crabe/config.yaml")
+	if err != nil {
+		return "", err
+	}
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "model: ") {
+			return strings.TrimSpace(strings.TrimPrefix(line, "model: ")), nil
+		}
+	}
+	return "", fmt.Errorf("model not found in config")
 }

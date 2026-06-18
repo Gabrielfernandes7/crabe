@@ -26,7 +26,11 @@ var rootCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			terminal.Run()
+			model, err := workspace.LoadConfig()
+			if err != nil {
+				model = "llama3.1:8b" // default fallback
+			}
+			terminal.Run(model)
 			return
 		}
 		cmd.Help()

@@ -1,4 +1,4 @@
-model: gemma3:12b
+model: llama3.1:8b
 ollama_url: http://localhost:11434
-temperature: 0.7
+temperature: 0.55
 max_tokens: 4096

@@ -93,7 +93,7 @@ func (c *OllamaClient) Chat(ctx context.Context, req ChatRequest) (ChatResponse,
 
 // PullModel pulls a model from the Ollama server.
 func (c *OllamaClient) PullModel(ctx context.Context, model string) error {
-	payload := map[string]string{"name": model}
+	payload := map[string]interface{}{"name": model, "stream": false}
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		return err
