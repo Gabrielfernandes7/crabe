@@ -69,9 +69,25 @@ func Warning(msg string, args ...any) {
 	fmt.Println(warning.Render(fmt.Sprintf(msg, args...)))
 }
 
-// Section — separa seções (muito usado no Claude Code)
+// Section — separa seções
 func Section(title string) {
 	fmt.Println()
 	fmt.Println(header.Render(" "+title+" "))
 	fmt.Println(strings.Repeat("─", 50))
+}
+
+// RenderHeader — cabeçalho estilizado para o terminal interativo
+func RenderHeader() string {
+	var s strings.Builder
+
+	logo := ` ▗▄▄▖   Crabe CLI
+ ▐▌     Business Agent
+ ▝▀▄▄▖  Local AI`
+
+	s.WriteString(primary.Render(logo))
+	s.WriteString("\n")
+	s.WriteString(strings.Repeat("─", 40))
+	s.WriteString("\n")
+	
+	return s.String()
 }
